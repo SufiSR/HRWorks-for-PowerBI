@@ -1,0 +1,35 @@
+let
+    // Login procedure for HRWorks
+    body = "{""accessKey"":"""&AccessKey&""",""secretAccessKey"":"""&AccessSecret&"""}",
+
+    // MAKE SURE TO WORK WITH A GENERAL PATH THAT RETURNS AN HTTP CODE 200 (such as "https://api.hrworks.de/v2),
+    // and define your endpoint as the relative path always
+    Data= Web.Contents("https://api.hrworks.de/v2/",
+        [RelativePath ="authentication", 
+        Content=Text.ToBinary(body),
+        Headers=[#"Content-Type"="application/json"]]),
+    DataRecord = Json.Document(Data),
+    hrworks_token=DataRecord,
+    mytoken=Record.Field(hrworks_token,"token"),    
+    login_token = Text.Combine({"Bearer ",mytoken}),
+
+    // Actual Call for absences for a list of people from today till the end of the year
+    ListofPeople= "[john.doe@mail.com, jane.de@mail.com]", // List of people to request (this could also come from another query)
+    
+    // Setting the year data
+    today = Date.From(DateTime.LocalNow()),  //Date Today
+    year = Date.ToText(today, [Format="yyyy"]),  //retrieving year from date
+    today_string= Date.ToText(today, [Format="yyyy-MM-dd"]),  //date as string
+    begin= today_string,
+    end= Text.Combine({year,"-12-31"}),   // end of year
+
+    HTTPHeader = [RelativePath = "persons/available-working-hours", 
+                  Query = [persons=ListofPeople, beginDate=begin, endDate=end, interval="days"],
+                  Headers=[Authorization=login_token]],   
+    Data3= Web.Contents("https://api.hrworks.de/v2/", HTTPHeader),
+    DataRecord2=Json.Document(Data3),
+    #"In Tabelle konvertiert" = Record.ToTable(DataRecord2),
+    #"Erweiterte Value" = Table.ExpandListColumn(#"In Tabelle konvertiert", "Value"),
+    #"Erweiterte Value1" = Table.ExpandRecordColumn(#"Erweiterte Value", "Value", {"beginDate", "endDate", "workingHours", "regularWorkingHours"}, {"Value.beginDate", "Value.endDate", "Value.workingHours", "Value.regularWorkingHours"})
+in
+    #"Erweiterte Value1"

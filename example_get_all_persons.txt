@@ -1,0 +1,23 @@
+let
+    // Login procedure for HRWorks        
+    body = "{""accessKey"":"""&AccessKey&""",""secretAccessKey"":"""&AccessSecret&"""}",
+    // MAKE SURE TO WORK WITH A GENERAL PATH THAT RETURNS AN HTTP CODE 200 (such as "https://api.hrworks.de/v2),
+    // and define your endpoint as the relative path always
+    Data= Web.Contents("https://api.hrworks.de/v2/",
+        [RelativePath ="authentication", 
+        Content=Text.ToBinary(body),
+        Headers=[#"Content-Type"="application/json"]]),
+    DataRecord = Json.Document(Data),
+    hrworks_token=DataRecord,
+    mytoken=Record.Field(hrworks_token,"token"),    
+    login_token = Text.Combine({"Bearer ",mytoken}),
+
+    // Actual Call for Persons
+    HTTPHeader = [RelativePath = "persons", 
+                  Headers=[Authorization=login_token]],
+    Data2= Web.Contents("https://api.hrworks.de/v2/", HTTPHeader),
+    DataRecord2=Json.Document(Data2),
+    #"In Tabelle konvertiert" = Record.ToTable(DataRecord2),
+    #"Erweiterte Value" = Table.ExpandListColumn(#"In Tabelle konvertiert", "Value")
+in
+    #"Erweiterte Value"
