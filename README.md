@@ -9,6 +9,7 @@ Please note that everything is set up in the pbix File.
 ## Using the pbix File
 Import the pbix file into your PowerBI Desktop. Open "Transform data".
 Change the accessKey variable and the accessKeySecret variable to your HRWorks API Keys.
+Please change the content of the queries with the content from the TXT FILES!
 For the Sample_Absence_incl_Token please change the variable ListOfPeople according to your needs in the advanced editor (right-click on query)
 Once you are done, run update data.
 You can now create your reports and you can publish the PowerBI file to the PowerBi Cloud. There you can set to update automatically.
